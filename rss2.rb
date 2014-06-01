@@ -1,4 +1,4 @@
-require 'rss'
+require 'feed-normalizer'
 require 'nokogiri'
 require 'open-uri'
 require 'twitter'
@@ -30,11 +30,12 @@ def tweet(twitter_client, db, record_data, record_name, text)
 end
 
 ### akizuki begin ###
-akizuki = RSS::Parser.parse('http://shokai.herokuapp.com/feed/akizuki.rss')
-akizuki_item = akizuki.channel.items
-(2..11).each do |num|
+akizuki = FeedNormalizer::FeedNormalizer.parse open('http://shokai.herokuapp.com/feed/akizuki.rss')
+akizuki_item = akizuki.entries
+
+(2..11).each do |num|	
 	text = akizuki_item[num].description
-	link = akizuki_item[num].link
+	link = akizuki_item[num].url
 	ptext = Nokogiri::HTML.parse(text).xpath('//p')
 	pimage = Nokogiri::HTML.parse(text).xpath('//img')
 	akizuki_feed = ptext[1].text+" "+link+" "+pimage.attribute('src').value
@@ -44,25 +45,17 @@ end
 ### akizuki end ###
 
 ### aitendo begin ##
-aitendo = Nokogiri::HTML(open('http://www.aitendo.com/rss/rss.php'))
-aitendo_titles = []
-aitendo_links = []
-
-aitendo.xpath('//title').each do |title|
-	aitendo_titles << title.text
-end
-aitendo.xpath('//item').each do |link|
-	aitendo_links << link.attribute('rdf:about').value	
-end
-# サイトのタイトルを削除
-aitendo_titles.delete_at(0)
+aitendo = FeedNormalizer::FeedNormalizer.parse open('http://www.aitendo.com/rss/rss.php')
+aitendo_item = aitendo.entries
 
 (0..9).each do |num|
-	title = aitendo_titles[num]	
-	link = aitendo_links[num]
+	title = aitendo_item[num].title
+	link = aitendo_item[num].url
 	aitendo_feed = title+" "+link
 	time = Time.now.strftime("%Y-%m-%d %H:%M:%S")
 
 	tweet(client, db, record_aitendo, "aitendo", aitendo_feed)
 end
 ###aitendo end ###
+
+p "end"

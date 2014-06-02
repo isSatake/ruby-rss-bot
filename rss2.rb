@@ -52,7 +52,6 @@ aitendo_item = aitendo.entries
 	title = aitendo_item[num].title
 	link = aitendo_item[num].url
 	aitendo_feed = title+" "+link
-	time = Time.now.strftime("%Y-%m-%d %H:%M:%S")
 
 	tweet(client, db, record_aitendo, "aitendo", aitendo_feed)
 end

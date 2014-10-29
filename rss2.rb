@@ -12,8 +12,11 @@ client = Twitter::REST::Client.new(
 
 class Rss
 	def initialize(name, uri, range, twitter_client)
+		time = Time.now.to_i
 		db = SQLite3::Database.open "ruby-rss-bot.sqlite3"
-		record = db.execute "select * from #{name} order by time desc limit 20;"
+
+		#その日に取得したフィード
+		record = db.execute "select * from #{name} where time > #{time} - 86400 order by time desc;"
 
 		uri_parsed = URI.parse uri
 		feeds = FeedNormalizer::FeedNormalizer.parse open(uri_parsed)
@@ -32,7 +35,6 @@ class Rss
 			end
 
 			if !repeated then	
-				time = Time.now.strftime("%Y-%m-%d %H:%M:%S")	
 				db.execute "insert into #{name} values ('#{feed}', '#{time}');"
 				twitter_client.update(feed)
 			end	
@@ -43,5 +45,5 @@ class Rss
 end
 
 akizuki = Rss.new("akizuki", 'http://shokai.herokuapp.com/feed/akizuki.rss', 2..21, client)
-aitendo = Rss.new("aitendo", 'http://www.aitendo.com/rss/rss.php', 0..19, client)
+aitendo = Rss.new("aitendo", 'http://www.aitendo.com/rss/rss.php', 0..29, client)
 slinux = Rss.new("slinux", 'http://pipes.yahoo.com/pipes/pipe.run?_id=43d7a8defa45bcda73071c0a157abadf&_render=rss', 0..19, client)

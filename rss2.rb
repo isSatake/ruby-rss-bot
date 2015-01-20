@@ -2,12 +2,14 @@ require 'feed-normalizer'
 require 'open-uri'
 require 'twitter'
 require 'sqlite3'
+require 'pit'
 
+partsbot = Pit.get('PartsBot')
 client = Twitter::REST::Client.new(
-	consumer_key:        "",
-	consumer_secret:     "",
-	access_token:        "",
-	access_token_secret: "",
+	consumer_key:        partsbot['consumer_key'],
+	consumer_secret:     partsbot['consumer_secret'],
+	access_token:        partsbot['access_token'],
+	access_token_secret: partsbot['access_token_secret']
 )
 
 class Rss
@@ -22,11 +24,13 @@ class Rss
 		feeds = FeedNormalizer::FeedNormalizer.parse open(uri_parsed)
 		entries = feeds.entries
 
+		#rangeで指定したぶんRSSを読む
 		(range).each do |num|
 			title = entries[num].title
 			link = entries[num].url
 			feed = title+" "+link
 
+			#dbを見て重複をチェックする
 			repeated = false
 			record.each do |data|
 				if data[0] == feed then
@@ -34,6 +38,7 @@ class Rss
 				end
 			end
 
+			#dbに突っ込んでつぶやく
 			if !repeated then	
 				db.execute "insert into #{name} values ('#{feed}', '#{time}');"
 				twitter_client.update(feed)
@@ -44,6 +49,7 @@ class Rss
 	end
 end
 
+#各サイト
 akizuki = Rss.new("akizuki", 'http://shokai.herokuapp.com/feed/akizuki.rss', 2..21, client)
 aitendo = Rss.new("aitendo", 'http://www.aitendo.com/rss/rss.php', 0..29, client)
 slinux = Rss.new("slinux", 'http://pipes.yahoo.com/pipes/pipe.run?_id=43d7a8defa45bcda73071c0a157abadf&_render=rss', 0..19, client)

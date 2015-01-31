@@ -3,8 +3,11 @@ require 'open-uri'
 require 'twitter'
 require 'sqlite3'
 require 'pit'
+require 'opengraph'
 
 partsbot = Pit.get('PartsBot')
+
+#twitter
 client = Twitter::REST::Client.new(
 	consumer_key:        partsbot['consumer_key'],
 	consumer_secret:     partsbot['consumer_secret'],
@@ -28,7 +31,7 @@ class Rss
 		(range).each do |num|
 			title = entries[num].title
 			link = entries[num].url
-			feed = title+" "+link
+			feed = title + " " + link
 
 			#dbを見て重複をチェックする
 			repeated = false
